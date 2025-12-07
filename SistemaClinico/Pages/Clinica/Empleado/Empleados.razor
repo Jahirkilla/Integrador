@@ -1,0 +1,147 @@
+﻿@page "/empleados"
+@inject EmpleadoService empleadoService
+@inject TipoEmpleadoService tipoEmpleadoService
+
+<h3>Gestión de Empleados</h3>
+
+<!-- Formulario para registrar un nuevo empleado -->
+<div class="card p-3 mb-4">
+	<h5>Registrar Empleado</h5>
+
+	<EditForm Model="nuevoEmpleado" OnValidSubmit="GuardarEmpleado">
+		<DataAnnotationsValidator />
+		<ValidationSummary />
+
+		<div class="mb-2">
+			<label>Nro Documento</label>
+			<InputText @bind-Value="nuevoEmpleado.nroDocumento" class="form-control" />
+		</div>
+		<div class="mb-2">
+			<label>Ap Paterno</label>
+			<InputText @bind-Value="nuevoEmpleado.apPaterno" class="form-control" />
+		</div>
+		<div class="mb-2">
+			<label>Ap Materno</label>
+			<InputText @bind-Value="nuevoEmpleado.apMaterno" class="form-control" />
+		</div>
+		<div class="mb-2">
+			<label>Nombres</label>
+			<InputText @bind-Value="nuevoEmpleado.nombres" class="form-control" />
+		</div>
+		<div class="mb-2">
+			<label>Clave</label>
+			<InputText @bind-Value="nuevoEmpleado.clave" class="form-control" type="password" />
+		</div>
+		<div class="mb-2">
+			<label>Estado</label>
+			<InputText @bind-Value="nuevoEmpleado.estado" class="form-control" />
+		</div>
+		<div class="mb-2">
+			<label>Imagen</label>
+			<InputText @bind-Value="nuevoEmpleado.imagen" class="form-control" />
+		</div>
+		<div class="mb-2">
+			<label>Usuario</label>
+			<InputText @bind-Value="nuevoEmpleado.usuario" class="form-control" />
+		</div>
+		<div class="mb-2">
+			<label>Tipo de Empleado</label>
+			<InputSelect @bind-Value="nuevoEmpleado.idTipoEmpleado" class="form-control">
+				<option>Seleccionar Tipo</option>
+				@foreach (var tipo in tipoEmpleados)
+				{
+					<option value="@tipo.idTipoEmpleado">@tipo.descripcion</option>
+				}
+			</InputSelect>
+		</div>
+
+		<button type="submit" class="btn btn-primary">Guardar</button>
+	</EditForm>
+</div>
+
+<!-- Tabla para mostrar empleados -->
+<div class="card p-3">
+	<h5>Lista de Empleados</h5>
+
+	@if (empleados == null)
+	{
+		<p>Cargando...</p>
+	}
+	else if (empleados.Count == 0)
+	{
+		<p>No hay empleados registrados</p>
+	}
+	else
+	{
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>Id Empleado</th>
+					<th>Ap Materno</th>
+					<th>Ap Paterno</th>
+					<th>Nombres</th>
+					<th>Nro Documento</th>
+					<th>Tipo Empleado</th>
+					<th>Acciones</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var e in empleados)
+				{
+					<tr>
+						<td>@e.idEmpleado</td>
+						<td>@e.apMaterno</td>
+						<td>@e.apPaterno</td>
+						<td>@e.nombres</td>
+						<td>@e.nroDocumento</td>
+						<td>@e.tipoEmpleado?.descripcion</td>
+						<td>
+							<button class="btn btn-danger btn-sm" @onclick="() => EliminarEmpleado(e.idEmpleado)">Eliminar</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+</div>
+
+@code {
+	private List<Empleado> empleados = new();
+	private List<TipoEmpleado> tipoEmpleados = new();
+	private Empleado nuevoEmpleado = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		await CargarTipoEmpleados();
+		await CargarEmpleados();
+	}
+
+	private async Task CargarTipoEmpleados()
+	{
+		tipoEmpleados = await tipoEmpleadoService.GetTipoEmpleados();
+	}
+
+	private async Task CargarEmpleados()
+	{
+		empleados = await empleadoService.GetEmpleados();
+	}
+
+	private async Task GuardarEmpleado()
+	{
+		var exito = await empleadoService.AddEmpleado(nuevoEmpleado);
+		if (exito)
+		{
+			nuevoEmpleado = new Empleado();
+			await CargarEmpleados();
+		}
+	}
+
+	private async Task EliminarEmpleado(int id)
+	{
+		var exito = await empleadoService.DeleteEmpleado(id);
+		if (exito)
+		{
+			await CargarEmpleados();
+		}
+	}
+}

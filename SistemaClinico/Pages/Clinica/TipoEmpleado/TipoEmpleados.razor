@@ -1,0 +1,98 @@
+﻿@page "/tipo-empleados"
+@inject TipoEmpleadoService tipoEmpleadoService
+
+<h3>Gestión de Tipo de Empleados</h3>
+
+<!-- Formulario para registrar un nuevo tipo de empleado -->
+<div class="card p-3 mb-4">
+	<h5>Registrar Tipo de Empleado</h5>
+	<EditForm Model="nuevoTipoEmpleado" OnValidSubmit="GuardarTipoEmpleado">
+		<DataAnnotationsValidator />
+		<ValidationSummary />
+
+		<div class="mb-2">
+			<label>Descripción</label>
+			<InputText @bind-Value="nuevoTipoEmpleado.descripcion" class="form-control" />
+		</div>
+		<div class="mb-2">
+			<label>Estado</label>
+			<InputText @bind-Value="nuevoTipoEmpleado.estado" class="form-control" />
+		</div>
+
+		<button type="submit" class="btn btn-primary">Guardar</button>
+	</EditForm>
+</div>
+
+<!-- Tabla para mostrar tipo de empleados -->
+<div class="card p-3">
+	<h5>Lista de Tipo de Empleados</h5>
+
+	@if (tipoEmpleados == null)
+	{
+		<p>Cargando...</p>
+	}
+	else if (tipoEmpleados.Count == 0)
+	{
+		<p>No hay tipo de empleados registrados</p>
+	}
+	else
+	{
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>Id Tipo Empleado</th>
+					<th>Descripción</th>
+					<th>Estado</th>
+					<th>Acciones</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var t in tipoEmpleados)
+				{
+					<tr>
+						<td>@t.idTipoEmpleado</td>
+						<td>@t.descripcion</td>
+						<td>@t.estado</td>
+						<td>
+							<button class="btn btn-danger btn-sm" @onclick="() => EliminarTipoEmpleado(t.idTipoEmpleado)">Eliminar</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+</div>
+
+@code {
+	private List<TipoEmpleado> tipoEmpleados = new();
+	private TipoEmpleado nuevoTipoEmpleado = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		await CargarTipoEmpleados();
+	}
+
+	private async Task CargarTipoEmpleados()
+	{
+		tipoEmpleados = await tipoEmpleadoService.GetTipoEmpleados();
+	}
+
+	private async Task GuardarTipoEmpleado()
+	{
+		var exito = await tipoEmpleadoService.AddTipoEmpleado(nuevoTipoEmpleado);
+		if (exito)
+		{
+			nuevoTipoEmpleado = new TipoEmpleado();
+			await CargarTipoEmpleados();
+		}
+	}
+
+	private async Task EliminarTipoEmpleado(int id)
+	{
+		var exito = await tipoEmpleadoService.DeleteTipoEmpleado(id);
+		if (exito)
+		{
+			await CargarTipoEmpleados();
+		}
+	}
+}

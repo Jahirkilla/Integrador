@@ -1,0 +1,98 @@
+﻿@page "/especialidads"
+@inject EspecialidadService especialidadService
+
+<h3>Gestión de Especialidades</h3>
+
+<!-- Formulario para registrar una nueva especialidad -->
+<div class="card p-3 mb-4">
+	<h5>Registrar Especialidad</h5>
+	<EditForm Model="nuevoEspecialidad" OnValidSubmit="GuardarEspecialidad">
+		<DataAnnotationsValidator />
+		<ValidationSummary />
+
+		<div class="mb-2">
+			<label>Descripción</label>
+			<InputText @bind-Value="nuevoEspecialidad.descripcion" class="form-control" />
+		</div>
+		<div class="mb-2">
+			<label>Estado</label>
+			<InputText @bind-Value="nuevoEspecialidad.estado" class="form-control" />
+		</div>
+
+		<button type="submit" class="btn btn-primary">Guardar</button>
+	</EditForm>
+</div>
+
+<!-- Tabla para mostrar especialidades -->
+<div class="card p-3">
+	<h5>Lista de Especialidades</h5>
+
+	@if (especialidads == null)
+	{
+		<p>Cargando...</p>
+	}
+	else if (especialidads.Count == 0)
+	{
+		<p>No hay especialidades registradas</p>
+	}
+	else
+	{
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>Id Especialidad</th>
+					<th>Descripción</th>
+					<th>Estado</th>
+					<th>Acciones</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var e in especialidads)
+				{
+					<tr>
+						<td>@e.idEspecialidad</td>
+						<td>@e.descripcion</td>
+						<td>@e.estado</td>
+						<td>
+							<button class="btn btn-danger btn-sm" @onclick="() => EliminarEspecialidad(e.idEspecialidad)">Eliminar</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+</div>
+
+@code {
+	private List<Especialidad> especialidads = new();
+	private Especialidad nuevoEspecialidad = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		await CargarEspecialidades();
+	}
+
+	private async Task CargarEspecialidades()
+	{
+		especialidads = await especialidadService.GetEspecialidads();
+	}
+
+	private async Task GuardarEspecialidad()
+	{
+		var exito = await especialidadService.AddEspecialidad(nuevoEspecialidad);
+		if (exito)
+		{
+			nuevoEspecialidad = new Especialidad();
+			await CargarEspecialidades();
+		}
+	}
+
+	private async Task EliminarEspecialidad(int id)
+	{
+		var exito = await especialidadService.DeleteEspecialidad(id);
+		if (exito)
+		{
+			await CargarEspecialidades();
+		}
+	}
+}

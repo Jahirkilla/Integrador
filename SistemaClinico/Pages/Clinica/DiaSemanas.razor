@@ -1,0 +1,92 @@
+﻿@page "/dia-semanas"
+@inject DiaSemanaService diaSemanaService
+
+<h3>Gestión de Dia de la Semana</h3>
+
+<!-- Formulario para registrar un nuevo día de la semana -->
+<div class="card p-3 mb-4">
+	<h5>Registrar Dia de Semana</h5>
+	<EditForm Model="nuevoDiaSemana" OnValidSubmit="GuardarDiaSemana">
+		<DataAnnotationsValidator />
+		<ValidationSummary />
+
+		<div class="mb-2">
+			<label>Nombre Dia Semana</label>
+			<InputText @bind-Value="nuevoDiaSemana.nombreDiaSemana" class="form-control" />
+		</div>
+
+		<button type="submit" class="btn btn-primary">Guardar</button>
+	</EditForm>
+</div>
+
+<!-- Tabla para mostrar día de la semana -->
+<div class="card p-3">
+	<h5>Lista de Dia de la Semana</h5>
+
+	@if (diaSemanas == null)
+	{
+		<p>Cargando...</p>
+	}
+	else if (diaSemanas.Count == 0)
+	{
+		<p>No hay dias de la semana registrados</p>
+	}
+	else
+	{
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>Id Dia Semana</th>
+					<th>Nombre Dia Semana</th>
+					<th>Acciones</th>
+				</tr>
+			</thead>
+			<tbody>
+				@foreach (var d in diaSemanas)
+				{
+					<tr>
+						<td>@d.idDiaSemana</td>
+						<td>@d.nombreDiaSemana</td>
+						<td>
+							<button class="btn btn-danger btn-sm" @onclick="() => EliminarDiaSemana(d.idDiaSemana)">Eliminar</button>
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+</div>
+
+@code {
+	private List<DiaSemana> diaSemanas = new();
+	private DiaSemana nuevoDiaSemana = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		await CargarDiaSemanas();
+	}
+
+	private async Task CargarDiaSemanas()
+	{
+		diaSemanas = await diaSemanaService.GetDiaSemanas();
+	}
+
+	private async Task GuardarDiaSemana()
+	{
+		var exito = await diaSemanaService.AddDiaSemana(nuevoDiaSemana);
+		if (exito)
+		{
+			nuevoDiaSemana = new DiaSemana();
+			await CargarDiaSemanas();
+		}
+	}
+
+	private async Task EliminarDiaSemana(int id)
+	{
+		var exito = await diaSemanaService.DeleteDiaSemana(id);
+		if (exito)
+		{
+			await CargarDiaSemanas();
+		}
+	}
+}

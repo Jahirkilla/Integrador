@@ -1,0 +1,175 @@
+﻿@page "/pacientes"
+@inject PacienteService pacienteService
+
+<h3>Gestión de Pacientes</h3>
+
+<!-- Formulario para registrar un nuevo paciente -->
+<div class="card p-3 mb-4">
+    <h5>Registrar Paciente</h5>
+    <EditForm Model="nuevoPaciente" OnValidSubmit="GuardarPaciente">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="mb-2">
+            <label>Nombres:</label>
+            <InputText @bind-Value="nuevoPaciente.nombres" class="form-control" />
+        </div>
+        <div class="mb-2">
+            <label>Ap. Paterno:</label>
+            <InputText @bind-Value="nuevoPaciente.apPaterno" class="form-control" />
+        </div>
+        <div class="mb-2">
+            <label>Ap. Materno:</label>
+            <InputText @bind-Value="nuevoPaciente.apMaterno" class="form-control" />
+        </div>
+        <div class="mb-2">
+            <label>Edad:</label>
+            <InputNumber @bind-Value="nuevoPaciente.edad" class="form-control" />
+        </div>
+        <div class="mb-2">
+            <label>Documento:</label>
+            <InputText @bind-Value="nuevoPaciente.nroDocumento" class="form-control" />
+        </div>
+        <div class="mb-2">
+            <label>Sexo:</label>
+            <InputText @bind-Value="nuevoPaciente.sexo" class="form-control" />
+        </div>
+        <div class="mb-2">
+            <label>Teléfono:</label>
+            <InputText @bind-Value="nuevoPaciente.telefono" class="form-control" />
+        </div>
+        <div class="mb-2">
+            <label>Dirección:</label>
+            <InputText @bind-Value="nuevoPaciente.direccion" class="form-control" />
+        </div>
+        <div class="mb-2">
+            <label>Estado:</label>
+            <InputText @bind-Value="nuevoPaciente.estado" class="form-control" />
+        </div>
+        <div class="mb-2">
+            <label>Imagen (URL):</label>
+            <InputText @bind-Value="nuevoPaciente.imagen" class="form-control" />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Guardar</button>
+    </EditForm>
+</div>
+
+<!-- Tabla para mostrar pacientes -->
+<div class="card p-3">
+    <h5>Lista de Pacientes</h5>
+
+    @if (pacientes == null)
+    {
+        <p>Cargando...</p>
+    }
+    else if (pacientes.Count == 0)
+    {
+        <p>No hay pacientes registrados.</p>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombres</th>
+                    <th>Apellidos</th>
+                    <th>Edad</th>
+                    <th>Documento</th>
+                    <th>Sexo</th>
+                    <th>Teléfono</th>
+                    <th colspan="2">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var p in pacientes)
+                {
+                    <tr>
+                        <td>@p.idPaciente</td>
+                        <td>@p.nombres</td>
+                        <td>@p.apPaterno @p.apMaterno</td>
+                        <td>@p.edad</td>
+                        <td>@p.nroDocumento</td>
+                        <td>@p.sexo</td>
+                        <td>@p.telefono</td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" @onclick="() => EliminarPaciente(p.idPaciente)">Eliminar</button>
+                            <button class="btn btn-primary btn-sm" @onclick="() => CargarParaEditar(p)">Actualizar</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private List<Paciente> pacientes = new();
+    private Paciente nuevoPaciente = new();
+    private bool modoEdicion = false;
+    private int idPacienteEditar = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarPacientes();
+    }
+
+    private async Task CargarPacientes()
+    {
+        pacientes = await pacienteService.GetPacientes();
+    }
+
+    private async Task GuardarPaciente()
+    {
+        bool exito = false;
+        if (modoEdicion)
+        {
+            // Actualizar
+            exito = await pacienteService.UpdatePaciente(idPacienteEditar, nuevoPaciente);
+            modoEdicion = false;
+            idPacienteEditar = 0;
+        }
+        else
+        {
+            // Registrar
+            exito = await pacienteService.AddPaciente(nuevoPaciente);
+        }
+
+        if (exito)
+        {
+            nuevoPaciente = new Paciente();
+            await CargarPacientes();
+        }
+    }
+
+    private async Task EliminarPaciente(int id)
+    {
+        var exito = await pacienteService.DeletePaciente(id);
+        if (exito)
+        {
+            await CargarPacientes();
+        }
+    }
+
+    private async Task CargarParaEditar(Paciente p)
+    {
+        idPacienteEditar = p.idPaciente;
+        nuevoPaciente = new Paciente
+            {
+                nombres = p.nombres,
+                apPaterno = p.apPaterno,
+                apMaterno = p.apMaterno,
+                edad = p.edad,
+                nroDocumento = p.nroDocumento,
+                sexo = p.sexo,
+                telefono = p.telefono,
+                direccion = p.direccion,
+                estado = p.estado,
+                imagen = p.imagen
+            };
+
+        modoEdicion = true;
+        await CargarPacientes();
+    }
+}
